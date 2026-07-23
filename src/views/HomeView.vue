@@ -326,53 +326,54 @@ const getBrandLogoUrl = (brand: string): string => {
       @scroll-to="scrollToSection"
     />
 
-    <!-- Hero Section (Video Banner) -->
     <!-- Hero Section (Video Banner Side-by-Side) -->
-    <section id="hero-section" class="relative max-w-7xl mx-auto px-6 mt-6 min-h-[600px] rounded-[36px] overflow-hidden border border-border shadow-xl flex flex-col md:flex-row items-center justify-between gap-8 bg-white py-12 md:py-6">
-      
-      <!-- Left details -->
-      <div class="relative z-20 md:w-1/2 px-8 sm:px-12 md:px-16 text-text space-y-6">
-        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
-          <Sparkles class="w-3.5 h-3.5" />
-          <span>New Release</span>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+      <section id="hero-section" class="relative w-full min-h-[600px] rounded-[36px] overflow-hidden border border-border shadow-xl flex flex-col lg:flex-row items-center justify-between gap-8 bg-white py-12 lg:py-6">
+        
+        <!-- Left details -->
+        <div class="relative z-20 lg:w-1/2 w-full px-6 sm:px-12 lg:px-16 text-text space-y-6">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-semibold">
+            <Sparkles class="w-3.5 h-3.5" />
+            <span>New Release</span>
+          </div>
+
+          <div class="space-y-3">
+            <span class="text-xs font-bold text-primary uppercase tracking-widest">OnePlus</span>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-text tracking-tight leading-tight">OnePlus 15</h1>
+            <p class="text-xs sm:text-sm text-muted font-semibold max-w-md leading-relaxed">
+              The peak of power and performance. Experience the stunning display, Snapdragon 8 Gen 5 processor, and a custom Hasselblad camera system.
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-4 pt-4">
+            <button
+              @click="selectBrandFromSlide('OnePlus')"
+              class="px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-primary/30 cursor-pointer transition-all active:scale-[0.98] flex items-center gap-2"
+            >
+              <span>Shop OnePlus</span>
+              <ArrowRight class="w-3.5 h-3.5" />
+            </button>
+            <span class="text-text/80 text-xs font-bold bg-white/60 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-border">Starting from Rs. 279,990</span>
+          </div>
         </div>
 
-        <div class="space-y-3">
-          <span class="text-xs font-bold text-primary uppercase tracking-widest">OnePlus</span>
-          <h1 class="text-4xl sm:text-5xl md:text-6xl font-black text-text tracking-tight leading-tight">OnePlus 15</h1>
-          <p class="text-xs sm:text-sm text-muted font-semibold max-w-md leading-relaxed">
-            The peak of power and performance. Experience the stunning display, Snapdragon 8 Gen 5 processor, and a custom Hasselblad camera system.
-          </p>
+        <!-- Right side: Video showing OnePlus 15 -->
+        <div class="lg:w-1/2 w-full flex justify-center items-center px-4 sm:px-6 lg:px-12">
+          <div class="relative w-full h-[350px] sm:h-[450px] rounded-[28px] overflow-hidden bg-white isolate transform-gpu">
+            <video
+              autoplay
+              loop
+              muted
+              playsinline
+              class="absolute inset-0 w-full h-full object-cover scale-[1.05] origin-center"
+            >
+              <source :src="heroVideo" type="video/mp4" />
+            </video>
+          </div>
         </div>
 
-        <div class="flex flex-wrap items-center gap-4 pt-4">
-          <button
-            @click="selectBrandFromSlide('OnePlus')"
-            class="px-6 py-3.5 rounded-xl bg-primary hover:bg-primary-dark text-white font-extrabold text-xs uppercase tracking-wider shadow-lg shadow-primary/30 cursor-pointer transition-all active:scale-[0.98] flex items-center gap-2"
-          >
-            <span>Shop OnePlus</span>
-            <ArrowRight class="w-3.5 h-3.5" />
-          </button>
-          <span class="text-text/80 text-xs font-bold bg-white/60 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-border">Starting from Rs. 279,990</span>
-        </div>
-      </div>
-
-      <!-- Right side: Video showing OnePlus 15 (watermark hidden by scale-cropping) -->
-      <div class="md:w-1/2 w-full flex justify-center items-center px-6 md:px-12">
-        <div class="relative w-full h-[450px] rounded-[28px] overflow-hidden bg-white">
-          <video
-            autoplay
-            loop
-            muted
-            playsinline
-            class="absolute inset-0 w-full h-full object-cover scale-[1.08] origin-top-left"
-          >
-            <source :src="heroVideo" type="video/mp4" />
-          </video>
-        </div>
-      </div>
-
-    </section>
+      </section>
+    </div>
 
     <!-- Featured Collections Section -->
     <section class="max-w-7xl mx-auto px-6 mt-20">
