@@ -14,6 +14,10 @@ export const authApi = {
     return api.post('/auth/login', { email, password }).then(res => res.data);
   },
 
+  sendOtp(email: string): Promise<ApiResponse<{ otp: string; email: string }>> {
+    return api.post('/auth/send-otp', { email }).then(res => res.data);
+  },
+
   logout(): Promise<ApiResponse<void>> {
     const token = localStorage.getItem('admin-token');
     return api.post('/auth/logout', null, {
