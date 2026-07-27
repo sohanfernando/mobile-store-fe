@@ -3,3 +3,8 @@ export interface LoginResponse {
   email: string
   role: string
 }
+
+export interface CustomerAuthResponse {
+  token: string
+  email: string
+}

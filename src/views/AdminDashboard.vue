@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { productApi } from '../api/productApi'
 import { orderApi } from '../api/orderApi'
 import { authApi } from '../api/authApi'
@@ -15,13 +15,26 @@ import AdminCustomers from '../components/AdminCustomers.vue'
 import AdminCoupons from '../components/AdminCoupons.vue'
 import { useToast } from '../composables/useToast'
 import { useOrderSocket } from '../composables/useOrderSocket'
-import { Smartphone, Package, ShoppingBag, LogOut, Plus, AlertCircle, Loader2, Pencil, Trash2, Search, X, ChevronDown, BarChart3, MessageSquare, Users, Eye, Ticket, Menu } from '@lucide/vue'
+import { Smartphone, Package, ShoppingBag, LogOut, Plus, AlertCircle, Loader2, Pencil, Trash2, Search, X, ChevronDown, BarChart3, MessageSquare, Users, Eye, Ticket, Menu, Archive, ArchiveRestore } from '@lucide/vue'
 import logoIcon from '../assets/logo-icon.png'
 
 const router = useRouter()
+const route = useRoute()
 const { showToast } = useToast()
 const adminEmail = ref('')
-const activeTab = ref<'analytics' | 'products' | 'orders' | 'reviews' | 'customers' | 'coupons'>('analytics')
+
+type AdminTab = 'analytics' | 'products' | 'orders' | 'reviews' | 'customers' | 'coupons'
+const VALID_ADMIN_TABS: AdminTab[] = ['analytics', 'products', 'orders', 'reviews', 'customers', 'coupons']
+
+const getInitialTab = (): AdminTab => {
+  const tab = route.query.tab
+  if (typeof tab === 'string' && VALID_ADMIN_TABS.includes(tab as AdminTab)) {
+    return tab as AdminTab
+  }
+  return 'analytics'
+}
+
+const activeTab = ref<AdminTab>(getInitialTab())
 const mobileSidebarOpen = ref(false)
 
 const orders = ref<Order[]>([])
@@ -47,9 +60,10 @@ const fetchOrders = async () => {
   }
 }
 
-const switchTab = (tab: 'analytics' | 'products' | 'orders' | 'reviews' | 'customers' | 'coupons') => {
+const switchTab = (tab: AdminTab) => {
   activeTab.value = tab
   mobileSidebarOpen.value = false
+  router.replace({ query: { ...route.query, tab } })
   if (tab === 'orders') {
     newOrderCount.value = 0
     fetchOrders()
@@ -65,8 +79,12 @@ const handleStatusChange = async (order: Order, newStatus: OrderStatus) => {
   try {
     const response = await orderApi.updateStatus(order.id, newStatus)
     if (response.success) {
-      order.status = response.data.status
-      showToast('Order status updated successfully', 'success')
+      order.status = response.data.order.status
+      if (response.data.emailSent === false) {
+        showToast(response.message || 'Order status updated, but the notification email failed to send', 'warning')
+      } else {
+        showToast('Order status updated successfully', 'success')
+      }
     } else {
       showToast(response.message || 'Failed to update order status', 'error')
     }
@@ -197,6 +215,9 @@ const resetProductFilters = () => {
 onMounted(() => {
   adminEmail.value = localStorage.getItem('admin-email') || 'admin@techpulse.lk'
   fetchProducts()
+  if (activeTab.value === 'orders') {
+    fetchOrders()
+  }
 
   connectOrderSocket((event) => {
     showToast(`New order ${event.orderNumber} from ${event.name} — Rs. ${event.total.toLocaleString()} (${event.itemCount} item${event.itemCount === 1 ? '' : 's'})`, 'info')
@@ -216,7 +237,7 @@ const fetchProducts = async () => {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await productApi.getAll()
+    const response = await productApi.getAll(true)
     if (response.success) {
       products.value = response.data
     } else {
@@ -226,6 +247,25 @@ const fetchProducts = async () => {
     errorMessage.value = 'Failed to load products. Make sure the backend server is running.'
   } finally {
     isLoading.value = false
+  }
+}
+
+const archivingProductId = ref<number | null>(null)
+
+const toggleProductActive = async (product: Product) => {
+  archivingProductId.value = product.id
+  try {
+    const response = await productApi.setActive(product.id, !product.active)
+    if (response.success) {
+      product.active = response.data.active
+      showToast(response.message || (product.active ? 'Product restored' : 'Product archived'), 'success')
+    } else {
+      showToast(response.message || 'Failed to update product status', 'error')
+    }
+  } catch (error: any) {
+    showToast(error.response?.data?.message || 'An error occurred while updating the product.', 'error')
+  } finally {
+    archivingProductId.value = null
   }
 }
 
@@ -256,8 +296,11 @@ const executeDelete = async () => {
       showToast(response.message || 'Failed to delete product', 'error')
     }
   } catch (error: any) {
-    const message = error.response?.data?.message || 'An error occurred while deleting the product.'
-    showToast(message, 'error')
+    if (error.response?.status === 409) {
+      showToast('This product has order history and can\'t be deleted. Use Archive instead to hide it from the store.', 'error')
+    } else {
+      showToast(error.response?.data?.message || 'An error occurred while deleting the product.', 'error')
+    }
   }
 }
 
@@ -570,6 +613,7 @@ const handleLogout = async () => {
                     v-for="product in filteredProducts"
                     :key="product.id"
                     class="bg-surface border border-border rounded-2xl p-5 shadow-sm space-y-4 hover:border-primary/30 transition-all"
+                    :class="{ 'opacity-60': !product.active }"
                   >
                     <!-- Header: Image, Title, Brand & Actions -->
                     <div class="flex items-start justify-between gap-3">
@@ -587,7 +631,10 @@ const handleLogout = async () => {
                           </div>
                         </div>
                         <div class="min-w-0">
-                          <span class="text-[10px] text-primary font-bold uppercase tracking-wider">{{ product.brand }}</span>
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-[10px] text-primary font-bold uppercase tracking-wider">{{ product.brand }}</span>
+                            <span v-if="!product.active" class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-muted/15 text-muted border border-muted/20">Archived</span>
+                          </div>
                           <h4 class="font-bold text-text text-sm leading-tight truncate group-hover:text-primary transition-colors">{{ product.name }}</h4>
                           <p class="text-xs text-muted font-medium truncate">{{ product.category || 'Mobile Phones' }} • {{ product.modelNumber || 'N/A' }}</p>
                         </div>
@@ -599,6 +646,16 @@ const handleLogout = async () => {
                           title="Edit Product"
                         >
                           <Pencil class="w-4 h-4" />
+                        </button>
+                        <button
+                          @click="toggleProductActive(product)"
+                          :disabled="archivingProductId === product.id"
+                          class="p-2 rounded-lg bg-white hover:bg-surface border border-border hover:border-muted/40 text-muted hover:text-text transition-all cursor-pointer disabled:opacity-50"
+                          :title="product.active ? 'Archive Product' : 'Restore Product'"
+                        >
+                          <Loader2 v-if="archivingProductId === product.id" class="w-4 h-4 animate-spin" />
+                          <ArchiveRestore v-else-if="!product.active" class="w-4 h-4" />
+                          <Archive v-else class="w-4 h-4" />
                         </button>
                         <button
                           @click="confirmDelete(product)"
@@ -678,7 +735,7 @@ const handleLogout = async () => {
                         </tr>
                       </thead>
                       <tbody class="divide-y divide-border text-sm">
-                        <tr v-for="product in filteredProducts" :key="product.id" class="hover:bg-white transition-colors">
+                        <tr v-for="product in filteredProducts" :key="product.id" class="hover:bg-white transition-colors" :class="{ 'opacity-60': !product.active }">
                           <!-- Name & Brand -->
                           <td class="py-4 px-6">
                             <div @click="openDetailModal(product)" class="flex items-center gap-3 cursor-pointer group/item">
@@ -698,6 +755,7 @@ const handleLogout = async () => {
                                 <p class="font-bold text-text leading-tight group-hover/item:text-primary transition-colors">{{ product.name }}</p>
                                 <div class="flex flex-wrap gap-1 mt-1 items-center">
                                   <span class="text-xs text-primary font-semibold uppercase tracking-wider mr-2">{{ product.brand }}</span>
+                                  <span v-if="!product.active" class="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded-full bg-muted/15 text-muted border border-muted/20 mr-2">Archived</span>
                                   <span
                                     v-for="v in product.colorVariants"
                                     :key="v.id"
@@ -781,6 +839,16 @@ const handleLogout = async () => {
                                 title="Edit Product"
                               >
                                 <Pencil class="w-4 h-4" />
+                              </button>
+                              <button
+                                @click="toggleProductActive(product)"
+                                :disabled="archivingProductId === product.id"
+                                class="p-2 rounded-lg bg-white hover:bg-surface border border-border hover:border-muted/40 text-muted hover:text-text transition-all cursor-pointer disabled:opacity-50"
+                                :title="product.active ? 'Archive Product' : 'Restore Product'"
+                              >
+                                <Loader2 v-if="archivingProductId === product.id" class="w-4 h-4 animate-spin" />
+                                <ArchiveRestore v-else-if="!product.active" class="w-4 h-4" />
+                                <Archive v-else class="w-4 h-4" />
                               </button>
                               <button
                                 @click="confirmDelete(product)"

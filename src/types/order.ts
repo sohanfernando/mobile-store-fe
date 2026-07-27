@@ -54,6 +54,11 @@ export interface CreateOrderRequest {
   couponCode?: string
 }
 
+export interface OrderStatusUpdateResult {
+  order: Order
+  emailSent: boolean | null
+}
+
 export interface ApiResponse<T> {
   success: boolean
   message: string

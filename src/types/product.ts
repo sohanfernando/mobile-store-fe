@@ -17,6 +17,7 @@ export interface Product {
   ramGb: number
   storageGb: number
   warrantyPeriod: number
+  active: boolean
   colorVariants: ColorVariant[]
   createdAt: string
   updatedAt: string

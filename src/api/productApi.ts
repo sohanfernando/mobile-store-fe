@@ -19,8 +19,8 @@ api.interceptors.request.use((config) => {
 })
 
 export const productApi = {
-    getAll(): Promise<ApiResponse<Product[]>> {
-        return api.get('/products').then(res => res.data);
+    getAll(includeInactive = false): Promise<ApiResponse<Product[]>> {
+        return api.get('/products', { params: { includeInactive } }).then(res => res.data);
     },
 
     getById(id: number): Promise<ApiResponse<Product>> {
@@ -33,6 +33,10 @@ export const productApi = {
 
     update(id: number, productData: UpdateProductRequest): Promise<ApiResponse<Product>> {
         return api.put(`/products/${id}`, productData).then(res => res.data)
+    },
+
+    setActive(id: number, active: boolean): Promise<ApiResponse<Product>> {
+        return api.patch(`/products/${id}/status`, { active }).then(res => res.data)
     },
 
     delete(id: number): Promise<ApiResponse<void>> {

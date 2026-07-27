@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { productApi } from '../api/productApi'
 import { adminApi } from '../api/adminApi'
 import type { Product, CreateProductRequest } from '../types/product'
@@ -157,12 +157,46 @@ const singleImages = ref<string[]>([])
 const singleVariantId = ref<number | undefined>(undefined)
 let isInitialLoad = true
 
+// Which fields make sense per category - e.g. RAM/Storage don't apply to Speakers or Power Banks.
+interface CategoryFieldConfig {
+  showRam: boolean
+  showStorage: boolean
+  showWarranty: boolean
+  showModelNumber: boolean
+  defaultColorVariants: boolean
+}
+
+const categoryFieldConfig: Record<string, CategoryFieldConfig> = {
+  'Mobile Phones':             { showRam: true,  showStorage: true,  showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+  'Smartwatches':               { showRam: true,  showStorage: true,  showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+  'Earphones And Headphones':   { showRam: false, showStorage: false, showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+  'Power Banks':                { showRam: false, showStorage: false, showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+  'Speakers':                   { showRam: false, showStorage: false, showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+  'Cameras':                    { showRam: false, showStorage: true,  showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+  'Appliances':                 { showRam: false, showStorage: false, showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+  'Gaming Consoles':            { showRam: true,  showStorage: true,  showWarranty: true, showModelNumber: true, defaultColorVariants: true },
+}
+
+const DEFAULT_FIELD_CONFIG: CategoryFieldConfig = {
+  showRam: false, showStorage: false, showWarranty: true, showModelNumber: true, defaultColorVariants: true,
+}
+
+const activeFieldConfig = computed<CategoryFieldConfig>(
+  () => categoryFieldConfig[form.value.category] ?? DEFAULT_FIELD_CONFIG
+)
+
 watch(() => form.value.category, (newCategory) => {
   if (isInitialLoad) return
-  if (newCategory === 'Mobile Phones' || newCategory === 'Smartwatches') {
-    hasColorVariants.value = true
-  } else {
-    hasColorVariants.value = false
+  const config = categoryFieldConfig[newCategory] ?? DEFAULT_FIELD_CONFIG
+  hasColorVariants.value = config.defaultColorVariants
+
+  if (!config.showRam) {
+    form.value.ramGb = 0
+  }
+  if (!config.showStorage) {
+    form.value.storageGb = 0
+    storageInputValue.value = 0
+    storageUnit.value = 'GB'
   }
 })
 
@@ -215,11 +249,7 @@ onMounted(() => {
       singleVariantId.value = props.product.colorVariants[0].id;
     }
   } else {
-    if (form.value.category === 'Mobile Phones' || form.value.category === 'Smartwatches') {
-      hasColorVariants.value = true
-    } else {
-      hasColorVariants.value = false
-    }
+    hasColorVariants.value = (categoryFieldConfig[form.value.category] ?? DEFAULT_FIELD_CONFIG).defaultColorVariants
   }
   isInitialLoad = false
 })
@@ -373,7 +403,7 @@ const handleSubmit = async () => {
             <p v-if="validationErrors.brand" class="text-xs text-error mt-1 font-medium">{{ validationErrors.brand }}</p>
           </div>
 
-          <div>
+          <div v-if="activeFieldConfig.showModelNumber">
             <label for="modelNumber" class="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Model Number</label>
             <input
               v-model="form.modelNumber"
@@ -410,8 +440,8 @@ const handleSubmit = async () => {
 
         <!-- Column 2 -->
         <div class="space-y-4">
-          <div class="flex gap-3">
-            <div class="w-32 sm:w-36 shrink-0">
+          <div v-if="activeFieldConfig.showRam || activeFieldConfig.showStorage" class="flex gap-3">
+            <div v-if="activeFieldConfig.showRam" class="w-32 sm:w-36 shrink-0">
               <label for="ramGb" class="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">RAM (GB)</label>
               <input
                 v-model.number="form.ramGb"
@@ -423,7 +453,7 @@ const handleSubmit = async () => {
               />
             </div>
 
-            <div class="flex-1 min-w-0">
+            <div v-if="activeFieldConfig.showStorage" class="flex-1 min-w-0">
               <label class="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Storage</label>
               <div class="flex gap-2">
                 <input
@@ -464,7 +494,7 @@ const handleSubmit = async () => {
               <p v-if="validationErrors.price" class="text-xs text-error mt-1 font-medium">{{ validationErrors.price }}</p>
             </div>
 
-            <div class="w-32 sm:w-36 shrink-0">
+            <div v-if="activeFieldConfig.showWarranty" class="w-32 sm:w-36 shrink-0">
               <label for="warrantyPeriod" class="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">Warranty (mths)</label>
               <input
                 v-model.number="form.warrantyPeriod"

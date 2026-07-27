@@ -63,6 +63,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9011, color: 'Natural Titanium', stockQuantity: 15, images: ['https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=400&q=80'] },
         { id: 9012, color: 'Space Black', stockQuantity: 12, images: ['https://images.unsplash.com/photo-1695048133031-64d5c9071661?auto=format&fit=crop&w=400&q=80'] }
@@ -81,6 +82,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 24,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9021, color: 'Titanium Yellow', stockQuantity: 8, images: ['https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=400&q=80'] },
         { id: 9022, color: 'Titanium Gray', stockQuantity: 14, images: ['https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=400&q=80'] }
@@ -99,6 +101,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9031, color: 'Bay Blue', stockQuantity: 7, images: ['https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=400&q=80'] },
         { id: 9032, color: 'Obsidian Black', stockQuantity: 9, images: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80'] }
@@ -117,6 +120,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 18,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9041, color: 'Flowy Emerald', stockQuantity: 2, images: ['https://images.unsplash.com/photo-1565630916779-e303be97b6f5?auto=format&fit=crop&w=400&q=80'] },
         { id: 9042, color: 'Silky Black', stockQuantity: 18, images: ['https://images.unsplash.com/photo-1523206489230-c012c64b2b48?auto=format&fit=crop&w=400&q=80'] }
@@ -135,6 +139,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9061, color: 'Orange Ocean Band', stockQuantity: 8, images: ['https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -152,6 +157,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9071, color: 'Black', stockQuantity: 15, images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -169,6 +175,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9091, color: 'Midnight Black', stockQuantity: 20, images: ['https://images.unsplash.com/photo-1589003077984-894e133dabab?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -186,6 +193,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9111, color: 'Classic White', stockQuantity: 14, images: ['https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -471,13 +479,29 @@ const askQuestion = () => {
 
 
 
+const categoryRoutes: Record<string, string> = {
+  'Mobile Phones': '/mobile-phones',
+  'Smartwatches': '/smartwatches',
+  'Earphones And Headphones': '/earphones-headphones',
+  'Power Banks': '/power-banks',
+  'Speakers': '/speakers',
+  'Cameras': '/cameras',
+  'Appliances': '/home-appliances',
+  'Gaming Consoles': '/gaming-consoles'
+}
+
 const goHome = () => {
   router.push('/')
 }
 
 const goToCategory = () => {
   if (product.value?.category) {
-    router.push({ path: '/', query: { category: product.value.category } })
+    const path = categoryRoutes[product.value.category]
+    if (path) {
+      router.push(path)
+    } else {
+      router.push({ path: '/', query: { category: product.value.category } })
+    }
   } else {
     router.push('/')
   }

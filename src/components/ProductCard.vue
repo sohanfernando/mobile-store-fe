@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { Product } from '../types/product'
+import { getTotalStock } from '../composables/useProductFilters'
 import { Smartphone, Pencil, Trash2 } from '@lucide/vue'
 
 const props = withDefaults(defineProps<{
@@ -22,10 +23,7 @@ const handleImageError = () => {
   isImageBroken.value = true
 }
 
-const totalStock = computed(() => {
-  if (!props.product.colorVariants) return 0
-  return props.product.colorVariants.reduce((sum, v) => sum + v.stockQuantity, 0)
-})
+const totalStock = computed(() => getTotalStock(props.product))
 
 const productImage = computed(() => {
   if (!props.product.colorVariants || props.product.colorVariants.length === 0) return ''
