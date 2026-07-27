@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import Navbar from '../components/Navbar.vue'
 import StoreLocator from '../components/StoreLocator.vue'
 import ContactForm from '../components/ContactForm.vue'
-import FaqAccordion from '../components/FaqAccordion.vue'
 import Footer from '../components/Footer.vue'
+import { HelpCircle, ArrowRight } from '@lucide/vue'
 
 const router = useRouter()
 const isLoggedIn = ref(false)
@@ -66,9 +66,23 @@ onMounted(() => {
         <ContactForm />
       </section>
 
-      <!-- FAQ Accordion Component -->
+      <!-- FAQ Teaser -->
       <section id="faq-section" class="pt-6 border-t border-border pb-6">
-        <FaqAccordion />
+        <RouterLink
+          to="/faq"
+          class="flex items-center justify-between gap-4 bg-surface border border-border rounded-3xl p-6 md:p-8 hover:border-primary/30 transition-all group"
+        >
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0">
+              <HelpCircle class="w-5 h-5" />
+            </div>
+            <div>
+              <h2 class="text-sm font-black text-text tracking-tight">Have a question?</h2>
+              <p class="text-xs text-muted font-semibold mt-0.5">Visit our full FAQ Center for quick answers.</p>
+            </div>
+          </div>
+          <ArrowRight class="w-5 h-5 text-muted group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+        </RouterLink>
       </section>
 
     </main>
