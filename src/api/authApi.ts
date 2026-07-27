@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { ApiResponse } from "../types/product";
-import type { LoginResponse } from "../types/auth";
+import type { LoginResponse, CustomerAuthResponse } from "../types/auth";
 
 const api = axios.create({
   baseURL: '/api',
@@ -14,8 +14,16 @@ export const authApi = {
     return api.post('/auth/login', { email, password }).then(res => res.data);
   },
 
-  sendOtp(email: string): Promise<ApiResponse<{ otp: string; email: string }>> {
+  sendOtp(email: string): Promise<ApiResponse<void>> {
     return api.post('/auth/send-otp', { email }).then(res => res.data);
+  },
+
+  verifyOtp(email: string, otp: string): Promise<ApiResponse<CustomerAuthResponse>> {
+    return api.post('/auth/verify-otp', { email, otp }).then(res => res.data);
+  },
+
+  googleLogin(credential: string): Promise<ApiResponse<CustomerAuthResponse>> {
+    return api.post('/auth/customer/google', { credential }).then(res => res.data);
   },
 
   logout(): Promise<ApiResponse<void>> {

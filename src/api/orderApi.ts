@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { ApiResponse, CreateOrderRequest, Order, OrderStatus } from "../types/order";
+import type { ApiResponse, CreateOrderRequest, Order, OrderStatus, OrderStatusUpdateResult } from "../types/order";
 
 const api = axios.create({
     baseURL: '/api',
@@ -31,7 +31,7 @@ export const orderApi = {
         return api.get('/orders').then(res => res.data)
     },
 
-    updateStatus(id: number, status: OrderStatus): Promise<ApiResponse<Order>> {
+    updateStatus(id: number, status: OrderStatus): Promise<ApiResponse<OrderStatusUpdateResult>> {
         return api.patch(`/orders/${id}/status`, { status }).then(res => res.data)
     },
 

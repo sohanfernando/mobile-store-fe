@@ -50,7 +50,29 @@ const handleShopAllClick = () => {
   }
 }
 
+// Categories/brands with a dedicated landing page navigate there directly; anything else
+// falls back to filtering in place on the homepage catalog.
+const categoryRoutes: Record<string, string> = {
+  'Mobile Phones': '/mobile-phones',
+  'Smartwatches': '/smartwatches',
+  'Earphones And Headphones': '/earphones-headphones',
+  'Power Banks': '/power-banks',
+  'Speakers': '/speakers',
+  'Cameras': '/cameras',
+  'Appliances': '/home-appliances',
+  'Gaming Consoles': '/gaming-consoles'
+}
+
+const brandRoutes: Record<string, string> = {
+  'Apple': '/apple-store'
+}
+
 const handleSelectCategory = (categoryName: string) => {
+  const path = categoryRoutes[categoryName]
+  if (path) {
+    router.push(path)
+    return
+  }
   if (route.path !== '/') {
     router.push({ path: '/', query: { category: categoryName } })
   } else {
@@ -60,6 +82,11 @@ const handleSelectCategory = (categoryName: string) => {
 }
 
 const handleSelectBrand = (brandName: string) => {
+  const path = brandRoutes[brandName]
+  if (path) {
+    router.push(path)
+    return
+  }
   if (route.path !== '/') {
     router.push({ path: '/', query: { brand: brandName } })
   } else {
@@ -89,8 +116,9 @@ const handleUserClick = () => {
 </script>
 
 <template>
-  <header class="h-20 border-b border-border bg-background/95 sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto h-full px-6 flex items-center justify-between">
+  <header class="fixed top-4 inset-x-0 z-40 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto">
+    <div class="h-20 bg-background/95 backdrop-blur-sm border border-border rounded-[28px] shadow-lg px-6 flex items-center justify-between">
 
       <!-- Logo -->
       <div class="flex items-center gap-2 cursor-pointer group" @click="handleLogoClick">
@@ -215,7 +243,7 @@ const handleUserClick = () => {
 
     <!-- Mobile Navigation Panel -->
     <Transition name="mobile-menu">
-      <div v-if="mobileMenuOpen" class="md:hidden border-t border-border bg-background max-h-[calc(100vh-5rem)] overflow-y-auto">
+      <div v-if="mobileMenuOpen" class="md:hidden mt-2 bg-background/95 backdrop-blur-sm border border-border rounded-[28px] shadow-lg max-h-[calc(100vh-8rem)] overflow-y-auto">
         <nav class="px-6 py-4 flex flex-col gap-1 text-sm font-semibold text-muted">
           <button
             @click="handleHomeClick(); mobileMenuOpen = false"
@@ -260,7 +288,11 @@ const handleUserClick = () => {
         </nav>
       </div>
     </Transition>
+    </div>
   </header>
+
+  <!-- Spacer to reserve the space the fixed, floating header would otherwise overlap -->
+  <div class="h-24" aria-hidden="true"></div>
 </template>
 
 <style scoped>

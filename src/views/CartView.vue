@@ -92,6 +92,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9011, color: 'Natural Titanium', stockQuantity: 15, images: ['https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -109,6 +110,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 24,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9021, color: 'TitanYellow', stockQuantity: 8, images: ['https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -126,6 +128,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9031, color: 'Bay Blue', stockQuantity: 7, images: ['https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -143,6 +146,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 18,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9041, color: 'Flowy Emerald', stockQuantity: 2, images: ['https://images.unsplash.com/photo-1565630916779-e303be97b6f5?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -160,6 +164,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9061, color: 'Orange Ocean Band', stockQuantity: 8, images: ['https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -177,6 +182,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9071, color: 'Black', stockQuantity: 15, images: ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -194,6 +200,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9091, color: 'Midnight Black', stockQuantity: 20, images: ['https://images.unsplash.com/photo-1589003077984-894e133dabab?auto=format&fit=crop&w=400&q=80'] }
       ]
@@ -211,6 +218,7 @@ const seedMockProducts = (): Product[] => {
       warrantyPeriod: 12,
       createdAt: '',
       updatedAt: '',
+      active: true,
       colorVariants: [
         { id: 9111, color: 'Classic White', stockQuantity: 14, images: ['https://images.unsplash.com/photo-1606813907291-d86efa9b94db?auto=format&fit=crop&w=400&q=80'] }
       ]

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, CheckCircle2, AlertCircle, Loader2, Sparkles, Truck, ShieldCheck, Zap, Star, Clock } from '@lucide/vue'
 import logoIcon from '../assets/logo-icon.png'
@@ -10,9 +10,10 @@ const router = useRouter()
 const email = ref('')
 const otpDigits = ref(['', '', '', '', '', ''])
 const newsAndOffers = ref(true)
+const googleButtonRef = ref<HTMLDivElement | null>(null)
+const isGoogleLoading = ref(false)
 
 const step = ref<'email' | 'otp'>('email') // email -> otp
-const generatedOtp = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
 const infoMessage = ref('')
@@ -51,15 +52,14 @@ const handleEmailSubmit = async () => {
     errorMessage.value = 'Please enter a valid email address'
     return
   }
-  
+
   isLoading.value = true
   errorMessage.value = ''
   infoMessage.value = ''
 
   try {
     const res = await authApi.sendOtp(email.value.trim())
-    if (res.success && res.data) {
-      generatedOtp.value = res.data.otp
+    if (res.success) {
       step.value = 'otp'
       infoMessage.value = `OTP sent! Check your inbox at ${email.value}.`
       startCountdownTimer(300)
@@ -67,11 +67,7 @@ const handleEmailSubmit = async () => {
       errorMessage.value = res.message || 'Failed to send OTP'
     }
   } catch (err: any) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    generatedOtp.value = code
-    step.value = 'otp'
-    infoMessage.value = `OTP sent to ${email.value}!`
-    startCountdownTimer(300)
+    errorMessage.value = err.response?.data?.message || 'Failed to send OTP. Please try again.'
   } finally {
     isLoading.value = false
   }
@@ -149,7 +145,28 @@ const handleKeyDown = (index: number, event: KeyboardEvent) => {
   }
 }
 
-const verifyOtp = () => {
+// Shared by OTP verification and Google Sign-In - both end with the backend
+// issuing a real customer JWT that we then persist the same way.
+const completeCustomerLogin = (customerEmail: string, token: string) => {
+  localStorage.setItem('customer-token', token)
+  localStorage.setItem('customer-email', customerEmail)
+
+  // Initialize customer profile in localStorage if it doesn't exist
+  const profilesKey = 'customer-profiles'
+  const profiles = JSON.parse(localStorage.getItem(profilesKey) || '{}')
+  if (!profiles[customerEmail]) {
+    profiles[customerEmail] = {
+      name: '',
+      address: '',
+      orders: []
+    }
+    localStorage.setItem(profilesKey, JSON.stringify(profiles))
+  }
+
+  router.push('/dashboard')
+}
+
+const verifyOtp = async () => {
   if (isTimerExpired.value) {
     errorMessage.value = 'Verification code has expired. Please click Resend OTP to get a new code.'
     otpDigits.value = ['', '', '', '', '', '']
@@ -160,36 +177,25 @@ const verifyOtp = () => {
   isLoading.value = true
   errorMessage.value = ''
 
-  setTimeout(() => {
-    if (enteredOtp === generatedOtp.value) {
+  try {
+    const res = await authApi.verifyOtp(email.value.trim(), enteredOtp)
+    if (res.success && res.data) {
       if (timerInterval.value) clearInterval(timerInterval.value)
-      // Login successful!
-      localStorage.setItem('customer-token', 'cust-' + Math.random().toString(36).substring(2))
-      localStorage.setItem('customer-email', email.value)
-      
-      // Initialize customer profile in localStorage if it doesn't exist
-      const profilesKey = 'customer-profiles'
-      const profiles = JSON.parse(localStorage.getItem(profilesKey) || '{}')
-      if (!profiles[email.value]) {
-        profiles[email.value] = {
-          name: '',
-          address: '',
-          orders: []
-        }
-        localStorage.setItem(profilesKey, JSON.stringify(profiles))
-      }
-
-      isLoading.value = false
-      router.push('/dashboard')
+      completeCustomerLogin(res.data.email, res.data.token)
     } else {
-      isLoading.value = false
-      errorMessage.value = 'Invalid OTP. Please try again.'
-      // Reset inputs
+      errorMessage.value = res.message || 'Invalid OTP. Please try again.'
       otpDigits.value = ['', '', '', '', '', '']
       const firstInput = document.getElementById('otp-0') as HTMLInputElement
       if (firstInput) firstInput.focus()
     }
-  }, 1000)
+  } catch (err: any) {
+    errorMessage.value = err.response?.data?.message || 'Invalid OTP. Please try again.'
+    otpDigits.value = ['', '', '', '', '', '']
+    const firstInput = document.getElementById('otp-0') as HTMLInputElement
+    if (firstInput) firstInput.focus()
+  } finally {
+    isLoading.value = false
+  }
 }
 
 const resendOtp = async () => {
@@ -197,23 +203,95 @@ const resendOtp = async () => {
   errorMessage.value = ''
   infoMessage.value = ''
   otpDigits.value = ['', '', '', '', '', '']
-  
+
   try {
     const res = await authApi.sendOtp(email.value.trim())
-    if (res.success && res.data) {
-      generatedOtp.value = res.data.otp
+    if (res.success) {
       infoMessage.value = `A new verification code has been sent to ${email.value}!`
       startCountdownTimer(300)
+    } else {
+      errorMessage.value = res.message || 'Failed to resend OTP'
     }
   } catch (err: any) {
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    generatedOtp.value = code
-    infoMessage.value = 'A new verification code has been generated!'
-    startCountdownTimer(300)
+    errorMessage.value = err.response?.data?.message || 'Failed to resend OTP. Please try again.'
   } finally {
     isLoading.value = false
   }
 }
+
+// Google Identity Services - loaded lazily since it's only needed on this page.
+const loadGoogleScript = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    if ((window as any).google?.accounts?.id) {
+      resolve()
+      return
+    }
+    const existing = document.getElementById('google-identity-script')
+    if (existing) {
+      existing.addEventListener('load', () => resolve())
+      return
+    }
+    const script = document.createElement('script')
+    script.id = 'google-identity-script'
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Google Sign-In'))
+    document.head.appendChild(script)
+  })
+}
+
+const handleGoogleCredential = async (response: { credential: string }) => {
+  isGoogleLoading.value = true
+  errorMessage.value = ''
+  infoMessage.value = ''
+
+  try {
+    const res = await authApi.googleLogin(response.credential)
+    if (res.success && res.data) {
+      completeCustomerLogin(res.data.email, res.data.token)
+    } else {
+      errorMessage.value = res.message || 'Google sign-in failed. Please try again.'
+    }
+  } catch (err: any) {
+    errorMessage.value = err.response?.data?.message || 'Google sign-in failed. Please try again.'
+  } finally {
+    isGoogleLoading.value = false
+  }
+}
+
+const initGoogleSignIn = async () => {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined
+  if (!clientId) {
+    // Not configured yet - the button area simply stays empty rather than erroring out.
+    return
+  }
+  try {
+    await loadGoogleScript()
+    const google = (window as any).google
+    google.accounts.id.initialize({
+      client_id: clientId,
+      callback: handleGoogleCredential
+    })
+    if (googleButtonRef.value) {
+      google.accounts.id.renderButton(googleButtonRef.value, {
+        theme: 'outline',
+        size: 'large',
+        width: 360,
+        text: 'continue_with',
+        shape: 'pill'
+      })
+    }
+  } catch (err) {
+    // Silently skip the Google button if the script fails to load (e.g. offline/dev) -
+    // OTP sign-in remains fully functional either way.
+  }
+}
+
+onMounted(() => {
+  initGoogleSignIn()
+})
 
 const goBackToEmail = () => {
   if (timerInterval.value) clearInterval(timerInterval.value)
@@ -299,6 +377,19 @@ const goBackToEmail = () => {
             </label>
           </div>
         </form>
+
+        <!-- Google Sign-In (only offered alongside the email step) -->
+        <div v-if="step === 'email'" class="space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="flex-1 h-px bg-border"></div>
+            <span class="text-[10px] uppercase tracking-wider text-muted font-bold">Or</span>
+            <div class="flex-1 h-px bg-border"></div>
+          </div>
+          <div class="flex justify-center min-h-11">
+            <Loader2 v-if="isGoogleLoading" class="w-5 h-5 animate-spin text-primary" />
+            <div v-show="!isGoogleLoading" ref="googleButtonRef"></div>
+          </div>
+        </div>
 
         <!-- Step 2: OTP Verification -->
         <div v-else class="space-y-6">

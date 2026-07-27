@@ -54,10 +54,10 @@ const handleNewsletterSubmit = () => {
       <div class="md:col-span-3 space-y-4">
         <h4 class="text-xs font-black uppercase tracking-wider text-text">Customer Support</h4>
         <ul class="space-y-2.5 text-xs text-muted font-semibold">
-          <li><a href="#" class="hover:text-text transition-colors">Help FAQ Center</a></li>
-          <li><a href="#" class="hover:text-text transition-colors">Store Shipping & Delivery</a></li>
-          <li><a href="#" class="hover:text-text transition-colors">Returns & Refunds</a></li>
-          <li><a href="#" class="hover:text-text transition-colors">Warranty Policies</a></li>
+          <li><RouterLink to="/faq" class="hover:text-text transition-colors">Help FAQ Center</RouterLink></li>
+          <li><RouterLink to="/shipping-delivery" class="hover:text-text transition-colors">Store Shipping & Delivery</RouterLink></li>
+          <li><RouterLink to="/returns-refunds" class="hover:text-text transition-colors">Returns & Refunds</RouterLink></li>
+          <li><RouterLink to="/warranty-policy" class="hover:text-text transition-colors">Warranty Policies</RouterLink></li>
         </ul>
       </div>
 

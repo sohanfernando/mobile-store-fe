@@ -4,6 +4,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { productApi } from '../api/productApi'
 import type { Product } from '../types/product'
 import { useToast } from '../composables/useToast'
+import { getTotalStock, getDistinctValues } from '../composables/useProductFilters'
 import ProductCard from '../components/ProductCard.vue'
 import Navbar from '../components/Navbar.vue'
 import Footer from '../components/Footer.vue'
@@ -51,7 +52,24 @@ const categoryIcons: Record<string, any> = {
   'Gaming Consoles': Gamepad2
 }
 
+// Same category -> dedicated-page mapping used by Navbar.vue's mega-menu.
+const categoryRoutes: Record<string, string> = {
+  'Mobile Phones': '/mobile-phones',
+  'Smartwatches': '/smartwatches',
+  'Earphones And Headphones': '/earphones-headphones',
+  'Power Banks': '/power-banks',
+  'Speakers': '/speakers',
+  'Cameras': '/cameras',
+  'Appliances': '/home-appliances',
+  'Gaming Consoles': '/gaming-consoles'
+}
+
 const selectCategory = (categoryName: string) => {
+  const path = categoryRoutes[categoryName]
+  if (path) {
+    router.push(path)
+    return
+  }
   selectedCategory.value = categoryName
   selectedBrand.value = ''
   scrollToSection('catalog-section')
@@ -173,10 +191,7 @@ const filteredProducts = computed(() => {
   return list
 })
 
-const brands = computed(() => {
-  const brandSet = new Set(products.value.map(p => p.brand))
-  return Array.from(brandSet)
-})
+const brands = computed(() => getDistinctValues(products.value, p => p.brand))
 
 // Collection aggregations
 const newArrivals = computed(() => {
@@ -184,10 +199,7 @@ const newArrivals = computed(() => {
 })
 
 const backInStock = computed(() => {
-  return products.value.filter(p => {
-    const stock = p.colorVariants?.reduce((sum, v) => sum + v.stockQuantity, 0) || 0
-    return stock > 5
-  }).slice(0, 4)
+  return products.value.filter(p => getTotalStock(p) > 5).slice(0, 4)
 })
 
 const bestSellers = computed(() => {
